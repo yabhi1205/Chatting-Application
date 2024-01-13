@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chatting Application</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            /* Hide the scrollbar */
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            width: 60vw;
+            height: 80vh;
+        }
+
+        .header {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .active-users {
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: auto;
+            /* text-wrap:wrap; */
+            /* text-overflow: clip; */
+            padding: 20px;
+            padding-bottom: 0;
+            word-wrap: break-word;
+            /* Adjust padding for a better look */
+        }
+
+
+        .message {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            word-break: break-all;
+        }
+
+        .incoming-message {
+            background-color: #e0e0e0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 60%;
+        }
+
+        .outgoing-message {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            width: 60%;
+            max-width: 60%;
+            align-self: flex-end;
+            word-wrap: break-word;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+            white-space: pre-line;
+            /* Preserve line breaks in the textarea */
+        }
+
+        .send-button {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <div class="header">
+            <div>RTCA</div>
+            <div>RoomCode-11111</div>
+            <div class="active-users">Active Users</div>
+        </div>
+
+        <div class="message-container">
+            <!-- Incoming and Outgoing Messages will be displayed here -->
+
+        </div>
+
+        <div class="input-container">
+            <textarea class="message-input" placeholder="Type your message..." oninput="enableSendButton()"
+                onkeydown="handleKeyPress(event)"></textarea>
+            <button class="send-button" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+    <script>
+        if (!document.cookie) {
+            window.location = window.location.protocol + '//' + window.location.host
+        }
+        let name = ""
+        do {
+            name = prompt("Please enter your name:")
+        } while (name.trim() == "");
+        // console.log(window.location.href)
+        // window.addEventListener('beforeunload',(e)=> {
+        //     // Cancel the event
+        //     e.preventDefault();
+        //     // Standard-compliant browsers
+        //     e.returnValue = '';
+        //     // Show a confirmation dialog
+        //     const confirmationMessage = 'Are you sure you want to leave?';
+        //     e.returnValue = confirmationMessage; // For some older browsers
+        //     return confirmationMessage;
+        // });
+
+
+
+        // Event listener for beforeunload
+        
+
+        // Example function to be triggered when leaving the page
+
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        socket.on("connect", (socket) => {
+            alert("You are successfully connected!!"+socket.id)
+        });
+        socket.emit("join-room", { roomId: document.cookie.split("=")[1], name: name })
+        socket.on("new-user", (data) => {
+            alert(data)
+        })
+        socket.on("recieveMessage", (data) => {
+            RecieveMessage(data)
+        })
+
+        function onLeavePage() {
+            // Your logic here
+            socket.emit("UserDisconnect", { socketId: socket.id })
+            console.log('Leaving the page...');
+        }
+        window.addEventListener('beforeunload', function (e) {
+            // Standard-compliant browsers
+            const confirmationMessage = 'Are you sure you want to leave?';
+            e.returnValue = confirmationMessage;
+            // For some older browsers
+            return confirmationMessage;
+        });
+
+        // Event listener for page unload
+        window.addEventListener('unload', function () {
+            // This function will be triggered just before the page is unloaded
+            // You can call your function here
+            onLeavePage();
+        });
+        function RecieveMessage(data) {
+            const messageContainer = document.querySelector('.message-container');
+            const outgoingMessage = document.createElement('div');
+            outgoingMessage.classList.add('message', 'incoming-message');
+            const sender = document.createElement('div');
+            sender.classList.add('message-sender');
+            sender.textContent = data.name + ":";
+            const messageContent = document.createElement('div');
+            messageContent.innerHTML = data.message.replace(/\s\n\s/gi, "<br/>").replace(/\s\n/gi, "<br/>").replace(/\n\s/gi, "<br/>").replace(/\n/gi, "<br/>").replace(/\s{2,}/g, ' ');
+            // console.log(messageInput.value.toString())
+            outgoingMessage.appendChild(sender);
+            outgoingMessage.appendChild(messageContent);
+            messageContainer.appendChild(outgoingMessage);
+            messageContainer.scroll({ top: messageContainer.scrollHeight, behavior: 'smooth' })
+        }
+
+
+        function enableSendButton() {
+            const messageInput = document.querySelector('.message-input');
+            const sendButton = document.querySelector('.send-button');
+            sendButton.disabled = messageInput.value.trim() === '';
+        }
+
+        function handleKeyPress(event) {
+            const messageInput = document.querySelector('.message-input');
+            const sendButton = document.querySelector('.send-button');
+
+            if (event.key === 'Enter' && !event.shiftKey) {
+                // If Enter is pressed without Shift, send the message
+                event.preventDefault(); // Prevent new line
+                sendMessage();
+            } else if (event.key === 'Enter' && event.shiftKey) {
+                // If Shift + Enter is pressed, add a new line
+                event.preventDefault();
+                messageInput.value += '\n';
+            }
+        }
+
+        function sendMessage() {
+            const messageInput = document.querySelector('.message-input');
+            if (messageInput.value.trim() === '') {
+                return
+            }
+            const messageContainer = document.querySelector('.message-container');
+            const sendButton = document.querySelector('.send-button');
+            const outgoingMessage = document.createElement('div');
+            outgoingMessage.classList.add('message', 'outgoing-message');
+            const sender = document.createElement('div');
+            sender.classList.add('message-sender');
+            sender.textContent = 'You:';
+            const messageContent = document.createElement('div');
+            let finalmessage = messageInput.value.replace(/\s\n\s/gi, "<br/>").replace(/\s\n/gi, "<br/>").replace(/\n\s/gi, "<br/>").replace(/\n/gi, "<br/>").replace(/\s{2,}/g, ' ');
+            messageContent.innerHTML = finalmessage
+            // console.log(messageInput.value.toString())
+            outgoingMessage.appendChild(sender);
+            outgoingMessage.appendChild(messageContent);
+            messageContainer.appendChild(outgoingMessage);
+
+            // Clear the input and disable the send button
+            messageInput.value = '';
+            sendButton.disabled = true;
+
+            // Scroll to the bottom of the message container
+            // messageContainer.scrollTop = messageContainer.scrollHeight;
+            messageContainer.scroll({ top: messageContainer.scrollHeight, behavior: 'smooth' })
+            socket.emit("sendMessage", { name: name, message: finalmessage })
+        }
+
+        // function demo() {
+
+        //     setTimeout(() => {
+        //         RecieveMessage({ name: "ahsbahdbasjd", message: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Totam corporis deleniti magni impedit optio tempore, vel quisquam molestias id commodi minima vitae eos ratione? Vel praesentium minus voluptas assumenda ab eveniet delectus." })
+        //         demo()
+        //     }, 1000);
+        // }
+        // demo()
+    </script>
+</body>
+
+</html>

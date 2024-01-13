@@ -1,0 +1,128 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Chatting Application</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      margin: 0;
+    }
+
+    .container {
+      text-align: center;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #codeContainer {
+      background-color: #eee;
+      padding: 10px;
+      margin: 20px 0;
+      font-size: 1.5em;
+      border-radius: 4px;
+      user-select: none;
+    }
+
+    #copyButton {
+      background-color: #4CAF50;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    #joinButton {
+      background-color: #3498db;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>Real-Time Chatting Application</h1>
+
+    <div id="codeContainer">ABHINAVYADAV</div>
+
+    <button id="copyButton" onclick="copyCode()">Copy Code</button>
+    <button id="joinButton" onclick="joinRoom()">Join the Room</button>
+  </div>
+
+  <script>
+    function copyCode() {
+      const codeContainer = document.getElementById('codeContainer');
+      const codeText = codeContainer.innerText;
+      
+      // Create a temporary input element
+      const tempInput = document.createElement('textarea');
+      tempInput.value = codeText;
+      document.body.appendChild(tempInput);
+
+      // Select the text in the input element
+      tempInput.select();
+      tempInput.setSelectionRange(0, 99999); /* For mobile devices */
+
+      // Copy the text to the clipboard
+      document.execCommand('copy');
+
+      // Remove the temporary input element
+      document.body.removeChild(tempInput);
+
+      // Provide feedback to the user
+      alert('Code copied to clipboard: ' + codeText);
+    }
+
+    
+    async function fetchdata() {
+
+      let fetchdata = await fetch("/createRoom/demo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify({ RandNo: document.getElementById('codeContainer').innerText })
+      })
+      // let finaldata = await fetchdata.json()
+      // console.log(finaldata)
+      console.log(fetchdata.url)
+      window.location = fetchdata.url;
+    }
+    
+    function joinRoom() {
+      // Add logic to handle joining a room
+      const codeContainer = document.getElementById('codeContainer');
+      const codeText = codeContainer.innerText;
+      alert(`Joining the room with code: ${codeText}`);
+      fetchdata()
+    }
+  </script>
+  
+</body>
+
+</html>

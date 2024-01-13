@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Room</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      width: 60vw;
+      height: 60vh;
+    }
+
+    .header {
+      background-color: #3498db;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .form-container {
+      width: 80%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: #fff;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .create-room-link {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    a {
+      color: #3498db;
+      text-decoration: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+    <div class="header">
+      <h2>Join Room</h2>
+    </div>
+
+    <div class="content">
+      <div class="form-container">
+        <!-- <form > -->
+          <label for="roomCode">Room Code:</label>
+          <input type="text" id="roomCode" name="roomId" placeholder="Enter the room code" required>
+
+          <button onclick="SubmitButton()">Join Room</button>
+        <!-- </form> -->
+
+        <div class="create-room-link">
+          <p>Want to create a room? <a href="/createRoom">Create Room</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+<script>
+  async function SubmitButton() {
+    try {
+      let fetchdata = await fetch("/joinRoom/demo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify({ roomId: document.getElementById('roomCode').value })
+      })
+      if(fetchdata.status=="200"){
+        return window.location = fetchdata.url;
+      }
+      // console
+      let finaldata = await fetchdata.json()
+      console.log(fetchdata)
+      if(finaldata.error){
+        return alert(finaldata.error)
+      }
+    } catch (error) {
+      console.log(error)
+      return alert("Some Error Occured....\nPlease try again after sometime")
+    }
+  }
+</script>
+
+</html>
