@@ -77,7 +77,7 @@
     function copyCode() {
       const codeContainer = document.getElementById('codeContainer');
       const codeText = codeContainer.innerText;
-      
+
       // Create a temporary input element
       const tempInput = document.createElement('textarea');
       tempInput.value = codeText;
@@ -97,23 +97,36 @@
       alert('Code copied to clipboard: ' + codeText);
     }
 
-    
-    async function fetchdata() {
 
-      let fetchdata = await fetch("/createRoom/demo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // 'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: JSON.stringify({ RandNo: document.getElementById('codeContainer').innerText })
-      })
-      // let finaldata = await fetchdata.json()
-      // console.log(finaldata)
-      console.log(fetchdata.url)
-      window.location = fetchdata.url;
+    async function fetchdata() {
+      try {
+
+        let fetchdata = await fetch("/createRoom/demo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: JSON.stringify({ RandNo: document.getElementById('codeContainer').innerText })
+        })
+        // let finaldata = await fetchdata.json()
+        // console.log(finaldata)
+
+        if (fetchdata.status == "200") {
+          return window.location = fetchdata.url;
+        }
+        // console
+        let finaldata = await fetchdata.json()
+        console.log(fetchdata)
+        if (finaldata.error) {
+          return alert(finaldata.error)
+        }
+      } catch (error) {
+        console.log(error)
+        return alert("Some Error Occured....\nPlease try again after sometime")
+      }
     }
-    
+
     function joinRoom() {
       // Add logic to handle joining a room
       const codeContainer = document.getElementById('codeContainer');
@@ -122,7 +135,7 @@
       fetchdata()
     }
   </script>
-  
+
 </body>
 
 </html>
