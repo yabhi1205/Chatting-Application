@@ -2,7 +2,7 @@ const SavingData = require("../Routes/SavingData")
 
 const addUser = async (socket, data) => {
     let temp = await SavingData.findOneAndUpdate(
-        { RandNo: data.roomId }, // Specify the RandNo value for the document you want to update
+        { RandNo: data.roomId },
         {
             $push: {
                 Users: {
@@ -21,7 +21,7 @@ const prevMessage = async (roomid) => {
 
 const addMessage = async (socket, data) => {
     let roomid = await SavingData.findOneAndUpdate(
-        { 'Users.socketId': socket.id }, // Specify the socketId to find the document
+        { RandNo: socket.data.roomId, 'Users.socketId': socket.id },
         {
             $push: {
                 Messages: {
@@ -41,7 +41,7 @@ const addMessage = async (socket, data) => {
 
 const deleteUser = async (socket) => {
     let updatedUsers = await SavingData.findOneAndUpdate(
-        { 'Users.socketId': socket.id }, // Specify the socketId to find the document
+        { RandNo: socket.data.roomId, 'Users.socketId': socket.id },
         {
             $pull: { 'Users': { socketId: socket.id } }
         },
@@ -56,9 +56,6 @@ const deleteUser = async (socket) => {
     )
 
     // console.log("ashdgbajdasjdvas",updatedUsers)
-    if (updatedUsers && updatedUsers.Users.length === 0) {
-        // If no more users, delete the document
-        await SavingData.findOneAndDelete({ 'RandNo': updatedUsers.RandNo });
-    }
+    return updatedUsers;
 }
 module.exports = { addUser, prevMessage, addMessage, deleteUser }

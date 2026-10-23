@@ -21,11 +21,16 @@ const SavingData = new mongoose.Schema({
         {
             Name:{
                 type:String,
-                required:true
+                required:true,
+                maxlength: 2000
             },
             Message:{
                 type:String,
                 required:true
+            },
+            timestamp:{
+                type:Date,
+                default:Date.now
             }
         }
     ],

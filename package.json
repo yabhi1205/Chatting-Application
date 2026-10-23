@@ -1,26 +1,22 @@
 {
   "name": "realtime-chatting-app",
   "version": "1.0.0",
-  "description": "This is the Application using which you can send and recieve the messages in realtime",
+  "description": "A simple real-time chat app for private conversations",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
   "author": "Abhinav Yadav",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "ejs": "^3.1.9",
-    "express": "^4.18.2",
-    "express-status-monitor": "^1.2.3",
-    "mongodb": "^6.3.0",
-    "mongoose": "^8.0.3",
-    "socket.io": "^4.7.2"
+    "dotenv": "18.0.9",
+    "express": "5.3.0",
+    "mongoose": "8.24.6",
+    "socket.io": "4.8.4"
   },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.2"
-  }
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "yarn@1.22.22"
 }
