@@ -28,6 +28,12 @@ const SavingData = new mongoose.Schema({
                 type:String,
                 required:true
             },
+            IsCode:{ type:Boolean, default:false },
+            Attachments:[{
+                Name:{ type:String, required:true, maxlength:255 },
+                Type:{ type:String, required:true, maxlength:120 },
+                Data:{ type:String, required:true }
+            }],
             timestamp:{
                 type:Date,
                 default:Date.now

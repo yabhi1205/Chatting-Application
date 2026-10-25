@@ -1,4 +1,5 @@
 const SavingData = require("../Routes/SavingData")
+const ChatMessage = require("../Routes/ChatMessage")
 
 const addUser = async (socket, data) => {
     let temp = await SavingData.findOneAndUpdate(
@@ -15,28 +16,17 @@ const addUser = async (socket, data) => {
     // console.log(temp)
 }
 const prevMessage = async (roomid) => {
-    let prevmessage = await SavingData.findOne({ RandNo: roomid }).select("Messages")
-    return prevmessage
+    const room = await SavingData.findOne({ RandNo: roomid }).select("Messages")
+    if (!room) return null
+    const recent = await ChatMessage.find({ RoomId: roomid }).sort({ timestamp: 1 }).lean()
+    return { Messages: [...(room.Messages || []), ...recent] }
 }
 
 const addMessage = async (socket, data) => {
-    let roomid = await SavingData.findOneAndUpdate(
-        { RandNo: socket.data.roomId, 'Users.socketId': socket.id },
-        {
-            $push: {
-                Messages: {
-                    Name: data.name, // Replace with the actual name
-                    Message: data.message // Replace with the actual message
-                }
-            }
-        },
-        {
-            new: true, // Return the modified document
-            // projection: { RandNo: 1, _id: 0 } // Only return the RandNo field
-        }
-    ).select("RandNo")
-    // console.log(roomid)
-    return roomid
+    const room = await SavingData.findOne({ RandNo: socket.data.roomId, 'Users.socketId': socket.id }).select("RandNo")
+    if (!room) return null
+    await ChatMessage.create({ RoomId: room.RandNo, Name: data.name, Message: data.message, IsCode: data.isCode, Attachments: data.attachments })
+    return room
 }
 
 const deleteUser = async (socket) => {
