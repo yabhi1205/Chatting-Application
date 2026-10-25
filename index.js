@@ -40,9 +40,11 @@ async function deliverFileToRoom(file, roomId, senderId) {
     const stream = fs.createReadStream(file.filePath, { highWaterMark: uploadChunkSize });
     let index = 0;
     for await (const chunk of stream) {
+      if (file.cancelled) throw new Error('The sender cancelled this upload.');
       await Promise.all(recipients.map((peer) => socketAck(peer, 'file-transfer-chunk', { id: file.id, index, chunk })));
       index += 1;
     }
+    if (file.cancelled) throw new Error('The sender cancelled this upload.');
     await Promise.all(recipients.map((peer) => socketAck(peer, 'file-transfer-finish', { id: file.id })));
   } catch (error) {
     recipients.forEach((peer) => peer.emit('file-transfer-abort', { id: file.id }));
@@ -55,10 +57,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', roomRoutes());
 
 io.on('connection', (socket) => {
-  socket.on('join-room', async ({ roomId, name } = {}, acknowledge = () => {}) => {
+  socket.on('join-room', async ({ roomId, name, clientId } = {}, acknowledge = () => {}) => {
     const safeName = typeof name === 'string' ? name.trim().slice(0, 32) : '';
     const safeRoomId = typeof roomId === 'string' ? roomId.trim() : '';
-    if (!safeName || !/^\d{6}$/.test(safeRoomId)) return acknowledge({ error: 'Enter a name and a valid six digit room code.' });
+    const safeClientId = typeof clientId === 'string' && /^[a-zA-Z0-9_-]{16,80}$/.test(clientId) ? clientId : '';
+    if (!safeName || !safeClientId || !/^\d{6}$/.test(safeRoomId)) return acknowledge({ error: 'Enter a name and a valid six digit room code.' });
     try {
       const history = await prevMessage(safeRoomId);
       if (!history) return acknowledge({ error: 'That room no longer exists. Create a new room to get started.' });
@@ -68,9 +71,10 @@ io.on('connection', (socket) => {
       }
       socket.data.roomId = safeRoomId;
       socket.data.name = safeName;
+      socket.data.clientId = safeClientId;
       await socket.join(safeRoomId);
       await addUser(socket, { roomId: safeRoomId, name: safeName });
-      acknowledge({ roomId: safeRoomId, messages: (history.Messages || []).map((message) => ({ name: message.Name, message: message.Message, isCode: message.IsCode, attachments: (message.Attachments || []).map((file) => file.Data ? ({ name: file.Name || file.name, type: file.Type || file.type, data: file.Data || file.data }) : ({ id: file.Id || file.id, name: file.Name || file.name, type: file.Type || file.type, size: file.Size || file.size })), timestamp: message.timestamp })) });
+      acknowledge({ roomId: safeRoomId, messages: (history.Messages || []).map((message) => ({ name: message.Name, senderId: message.SenderId, message: message.Message, isCode: message.IsCode, attachments: (message.Attachments || []).map((file) => file.Data ? ({ name: file.Name || file.name, type: file.Type || file.type, data: file.Data || file.data }) : ({ id: file.Id || file.id, name: file.Name || file.name, type: file.Type || file.type, size: file.Size || file.size })), timestamp: message.timestamp })) });
       socket.to(safeRoomId).emit('presence', { type: 'joined', name: safeName });
       io.to(safeRoomId).emit('room-users', (await io.in(safeRoomId).fetchSockets()).map((member) => member.data.name).filter(Boolean));
     } catch (error) {
@@ -92,12 +96,25 @@ io.on('connection', (socket) => {
     } catch (error) { acknowledge({ error: 'Could not start the upload.' }); }
   });
 
+  socket.on('upload-cancel', () => {
+    const upload = activeUploads.get(socket.id);
+    if (upload) {
+      activeUploads.delete(socket.id);
+      upload.stream.destroy();
+      fs.promises.rm(upload.filePath, { force: true }).catch(() => {});
+    }
+    for (const [id, file] of availableFiles) if (file.ownerId === socket.id) {
+      file.cancelled = true;
+      availableFiles.delete(id);
+      fs.promises.rm(file.filePath, { force: true }).catch(() => {});
+    }
+  });
+
   socket.on('upload-chunk', async (chunk, acknowledge = () => {}) => {
     const upload = activeUploads.get(socket.id);
     if (!upload || !Buffer.isBuffer(chunk) || chunk.length > uploadChunkSize || upload.written + chunk.length > upload.size) return acknowledge({ error: 'Invalid upload chunk.' });
     upload.written += chunk.length;
-    if (upload.stream.write(chunk)) return acknowledge({ ok: true });
-    upload.stream.once('drain', () => acknowledge({ ok: true }));
+    upload.stream.write(chunk, (error) => acknowledge(error ? { error: 'The upload was cancelled.' } : { ok: true }));
   });
 
   socket.on('upload-finish', (acknowledge = () => {}) => {
@@ -122,9 +139,9 @@ io.on('connection', (socket) => {
       const files = cleanAttachments.map((item) => availableFiles.get(item.id));
       if (files.some((file) => !file || file.roomId !== roomId)) return acknowledge({ error: 'An uploaded file is no longer available.' });
       const storedAttachments = files.map((file) => ({ Id: file.id, Name: file.name, Type: file.type, Size: file.size }));
-      const entry = { name, message: cleanMessage, isCode: Boolean(isCode), attachments: files.map(({ id, name, type, size }) => ({ id, name, type, size })), timestamp: new Date().toISOString(), senderId: socket.id };
+      const entry = { name, message: cleanMessage, isCode: Boolean(isCode), attachments: files.map(({ id, name, type, size }) => ({ id, name, type, size })), timestamp: new Date().toISOString(), senderId: socket.data.clientId };
       if (!files.length && Buffer.byteLength(cleanMessage, 'utf8') <= 5 * 1024 * 1024) {
-        const saved = await addMessage(socket, { name, message: cleanMessage, isCode: Boolean(isCode), attachments: storedAttachments });
+        const saved = await addMessage(socket, { name, senderId: socket.data.clientId, message: cleanMessage, isCode: Boolean(isCode), attachments: storedAttachments });
         if (!saved) return acknowledge({ error: 'Your message could not be saved. Please rejoin the room.' });
       } else {
         entry.notSaved = true;

@@ -25,7 +25,7 @@ const prevMessage = async (roomid) => {
 const addMessage = async (socket, data) => {
     const room = await SavingData.findOne({ RandNo: socket.data.roomId, 'Users.socketId': socket.id }).select("RandNo")
     if (!room) return null
-    await ChatMessage.create({ RoomId: room.RandNo, Name: data.name, Message: data.message, IsCode: data.isCode, Attachments: data.attachments })
+    await ChatMessage.create({ RoomId: room.RandNo, Name: data.name, SenderId: data.senderId, Message: data.message, IsCode: data.isCode, Attachments: data.attachments })
     return room
 }
 

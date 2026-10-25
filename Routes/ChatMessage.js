@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const ChatMessage = new mongoose.Schema({
   RoomId: { type: String, required: true, index: true },
   Name: { type: String, required: true, maxlength: 32 },
+  SenderId: { type: String, maxlength: 80 },
   Message: { type: String, required: true },
   IsCode: { type: Boolean, default: false },
   Attachments: [{
