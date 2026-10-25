@@ -1,0 +1,23 @@
+.mobile-people{display:none}
+.cancel-send-button{height:36px;display:inline-flex;align-items:center;gap:6px;padding:0 13px;border:1px solid #efd8d2;border-radius:999px;background:#fff7f4;color:#9b4e40;font:600 11px 'DM Sans',sans-serif;white-space:nowrap;cursor:pointer;transition:background .16s,border-color .16s,color .16s,transform .16s}
+.cancel-send-button::before{content:'×';font:500 17px/1 Arial,sans-serif}
+.cancel-send-button:hover{background:#fce9e4;border-color:#e7b9ad;color:#873d32;transform:translateY(-1px)}
+.cancel-send-button:focus-visible,.leave-room:focus-visible{outline:3px solid #d6a195;outline-offset:2px}
+.cancel-send-button:disabled{opacity:.58;cursor:wait;transform:none}
+.leave-room{border-color:#eaded9;color:#8d5549}
+.composer-wrap [hidden]{display:none!important}
+@media(max-width:760px){
+  .mobile-people{display:flex;align-items:center;gap:8px;min-height:48px;padding:5px 16px;border-bottom:1px solid #f0f1ed;overflow-x:auto;scrollbar-width:thin}
+  .mobile-people::before{content:'HERE NOW';flex:none;color:#92998f;font-size:8px;font-weight:700;letter-spacing:.9px}
+  .mobile-person{display:flex;align-items:center;gap:5px;flex:none;color:#566054;font-size:10px;white-space:nowrap}
+  .mobile-person .person-avatar{width:23px;height:23px;font-size:9px}
+  .mobile-person.self{color:#356a4b;font-weight:700}
+}
+@media(max-width:400px){
+  .chat-header{gap:6px;padding:0 9px}
+  .chat-brand{font-size:15px}
+  .chat-brand .brand-mark{width:22px;height:22px;font-size:14px;margin-right:3px}
+  .chat-room-code{font-size:12px;letter-spacing:1px}
+  .chat-header .copy-small{padding:6px;font-size:9px}
+  .cancel-send-button{height:33px;padding:0 9px;font-size:10px}
+}

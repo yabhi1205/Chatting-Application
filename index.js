@@ -117,7 +117,8 @@ io.on('connection', (socket) => {
     upload.stream.write(chunk, (error) => acknowledge(error ? { error: 'The upload was cancelled.' } : { ok: true }));
   });
 
-  socket.on('upload-finish', (acknowledge = () => {}) => {
+  socket.on('upload-finish', (...args) => {
+    const acknowledge = args.find((argument) => typeof argument === 'function') || (() => {});
     const upload = activeUploads.get(socket.id);
     if (!upload || upload.written !== upload.size) return acknowledge({ error: 'The upload is incomplete.' });
     upload.stream.end(() => {
